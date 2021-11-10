@@ -45,15 +45,6 @@ public class Server {
         Socket clientSocket;
         boolean maxConnections = false;
 
-        //Hilo para agregarle un addShutdownHook(), e inciar ciertas acciones.
-        Thread shutdownThread = new Thread() {
-            public void run() {
-                //Esto se ejecutara antes de que la maquina virtual finalice
-                Pool.shutDownPool();
-            }
-        };
-        //addShutdownHook() registrará acciones que se realizarán en la terminación de un Programa.
-        Runtime.getRuntime().addShutdownHook(shutdownThread);
 
         try {
             CONT = 0;
@@ -86,5 +77,13 @@ public class Server {
         }
     }
     
+    /**
+     * Este metodo pretende restar -1 al contador de MAXTHREADS, para dejar libre
+     * el hilo para el proximo cliente.
+     */
+    public static void returnThread() {
+        CONT--;
+        logger.info("Numero de clientes: " + CONT);
+    }
 
 }
