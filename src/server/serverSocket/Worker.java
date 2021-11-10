@@ -47,6 +47,27 @@ public class Worker {
         this.maxThreads = maxThreads;
     }
 
-    
-    
+    /**
+     * Este metodo pretende devolver la respuesta del servidor al cliente
+     * mediante un mensaje. Ademas de cerrar el Output, Input y el socket del
+     * cliente.
+     */
+    public void closeReadWriteObject() {
+        try {
+            logger.info("Escribiendo el objeto para mandarlo al cliente");
+            oos.writeObject(msg);
+            logger.info("Devolviendo el objeto al cliente");
+            oos.close();
+            ois.close();
+            if (!maxThreads) {
+                this.sleep(10000);
+                returnThread();
+            }
+            socket.close();
+            logger.info("Conexion cerrada");
+        } catch (InterruptedException | IOException ex) {
+            Logger.getLogger(Worker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
 }
