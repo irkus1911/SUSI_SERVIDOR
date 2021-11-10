@@ -108,12 +108,68 @@ public class DAOableImplementation implements Logicable {
         //Devolcer usuario
         return user;
     }
+     /**
+     * Este metodo registra un usuario en la base de datos
+     * @param user Objeto usuario recibido mediante el socket 
+     * @return objeto User Devuelve el usuario creado
+     * @throws IncorrectUserException El usuario no es alfanumerico
+     * @throws IncorrectPasswordException La contraseña no es alfanumerica
+     * @throws IncorrectEmailException Patron de correo incorrecto 
+     * @throws UserExistException   Usuario ya existe en la base de datos
+     * @throws PasswordDontMatchException Las contraseñas no coinciden entre si(contraseña y confirmar contraseña)
+     * @throws ConnectException Hay un error de conexion con la base de datos
+     */
     
-    
-    
-    
-    
-    
+     //SignUp  Recibe Usuario/Devuelve Usuario
+    @Override
+    public synchronized User signUp(User user) throws IncorrectUserException, IncorrectPasswordException, IncorrectEmailException, UserExistException, PasswordDontMatchException, ConnectException {
+        logger.info("SignUp iniciado");
+        User usua;
+        //Pedir conexion al pool
+        con = pool.getConnection();
+        //Buscar si existe usuario
+        usua = buscarUser(user);
+
+        try {
+            
+            if (usua == null) {
+                //Query insertar usuario
+                stmt = con.prepareStatement(insertarUsuario);
+                stmt.setString(1, user.getLogin());
+                stmt.setString(2, user.getEmail());
+                stmt.setString(3, user.getFullName());
+                stmt.setString(4, user.getStatus().toString());
+                stmt.setString(5, user.getPrivilege().toString());
+                stmt.setString(6, user.getPassword());
+                stmt.setTimestamp(7, user.getLastPasswordChange());
+                stmt.executeUpdate();
+                //Guardamos el log in en el registro de los 10 ultimos
+                stmt = con.prepareStatement(procedimientoSignIn);
+                stmt.setString(1, user.getLogin());
+                stmt.executeUpdate();
+            } else {
+                //Usuario ya existe
+                logger.info("Usuario ya existe signUp");
+                throw new UserExistException("Usuario ya existe");
+            }
+
+        } catch (ConnectException ex) {
+            //Error con la base de datos
+            logger.info("Error de conexion SignUp");
+            System.out.println("error conexion");
+        } catch (SQLException ex) {
+            //Error con la base de datos
+            logger.info("Error de conexion SQL signUp");
+            throw new ConnectException("error de conexion a base de datos");
+        }
+        //Devolcer conexion al pool
+        pool.releaseConnection(con);
+        //cerrar todo
+        closeResulAndStatement();
+        //devolver usuario
+        return user;
+    }
+
     
     /**
      * Este metodo busca un usuario determinado buscado mediante el loggin y lo devuelve con todos los datos
