@@ -1,0 +1,112 @@
+package server.controller;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Logger;
+import lib.dataModel.User;
+import lib.dataModel.UserPrivilege;
+import lib.dataModel.UserStatus;
+import lib.exceptions.ConnectException;
+import lib.exceptions.IncorrectEmailException;
+import lib.exceptions.IncorrectPasswordException;
+import lib.exceptions.IncorrectUserException;
+import lib.exceptions.PasswordDontMatchException;
+import lib.exceptions.UserDontExistException;
+import lib.exceptions.UserExistException;
+import lib.interfaces.Logicable;
+import server.pool.Pool;
+
+/**
+ * Esta clase maneja la logica de los metodos de signIn y signUp
+ * @author Irkus de la Fuente, Steven Arce
+ */
+public class DAOableImplementation implements Logicable {
+    //logger
+    private final static Logger logger = Logger.getLogger("server.controller.Dao");
+    //atributos
+    private Connection con;
+    private Pool pool;
+    private ResultSet rs;
+    private PreparedStatement stmt;
+    //querys
+    private final String insertarUsuario = "insert into user (login,email,fullname,status,privilege,password,lastPasswordChange) values(?,?,?,?,?,?,?)";
+    private final String buscarUsuario = "select * from user where login=?";
+    private final String procedimientoSignIn = "{CALL last_ten_sign_in(?)}";
+    /**
+     * Constructor vacio construye el dao y asigna valor al pool
+     */
+    public DAOableImplementation() {
+        //Asignar valor al pool
+        this.pool = Pool.getInstance();
+    }
+    /**
+     * Metodo de cerrar el statement y resulSet
+     */
+    public void closeResulAndStatement() {
+        if (rs != null) {
+            try {
+                //cerrar resultSet
+                rs.close();
+            } catch (SQLException ex) {
+                logger.info("Error al cerrar el resultSet");
+            }
+        }
+        if (stmt != null) {
+            try {
+                //Cerrar statement
+                stmt.close();
+            } catch (SQLException ex) {
+                logger.info("Error al cerrar el preparedStatement");
+            }
+        }
+    }
+    /**
+     * Este metodo loguea a un usuario
+     * @param user Objeto usuario recibido mediante el socket 
+     * @return objeto User Devuelve el usuario en caso de no encontrar nada devuelve nulo
+     * @throws IncorrectUserException El usuario no es alfanumerico
+     * @throws IncorrectPasswordException La contraseña no es alfanumerica
+     * @throws UserDontExistException El usuario no esta registrado en la base de datos
+     * @throws PasswordDontMatchException La contraseña no esta registrada en la base de datos
+     * @throws ConnectException Hay un error de conexion con la base de datos
+     */
+      //SignIn  Recibe Usuario/Devuelve Usuario
+    @Override
+    public synchronized User signIn(User user) throws IncorrectUserException, IncorrectPasswordException, UserDontExistException, PasswordDontMatchException, ConnectException {
+        logger.info("SignIn iniciado");
+        User usua;
+        //Pedir conexion al pool
+        con = pool.getConnection();
+        try {
+            //Buscar si existe usuario
+            usua = buscarUser(user);
+            if (usua == null) {
+                //Usuario no existe
+                throw new UserDontExistException("Usuario no existe");
+            } else {
+                if (user.getPassword().equals(usua.getPassword())) {
+                    //Procedimiento guardar log ultimos 10 1ogins
+                    stmt = con.prepareStatement(procedimientoSignIn);
+                    stmt.setString(1, user.getLogin());
+                    stmt.executeUpdate();
+                } else {
+                    //Error contraseña no coincide con la de base de datos
+                    logger.info("Error contraseña signin");
+                    throw new PasswordDontMatchException("Contraseña incorrecta");
+                }
+            }
+        } catch (SQLException ex) {
+            //Error de conexion con la base de datos
+            logger.info("Error conexion signin");
+            throw new ConnectException("error de conexion a base de datos");
+        }
+        //Devolver la conexion al pool y cerrar todo
+        pool.releaseConnection(con);
+        closeResulAndStatement();
+        //Devolcer usuario
+        return user;
+    }
+    
+}
