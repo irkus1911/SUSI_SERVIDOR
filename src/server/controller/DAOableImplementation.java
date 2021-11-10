@@ -109,4 +109,45 @@ public class DAOableImplementation implements Logicable {
         return user;
     }
     
+    
+    
+    
+    
+    
+    
+    /**
+     * Este metodo busca un usuario determinado buscado mediante el loggin y lo devuelve con todos los datos
+     * @param user Objeto usuario recibido desde el socket
+     * @return objeto User Devuelve un objeto usuario con todos los datos introducidos en caso de no encontrarlo nulo
+     */
+    //Busca usuario recibe User y devuelve User
+    public User buscarUser(User user) throws ConnectException {
+        logger.info("Buscar usuario iniciado");
+        try {
+            //ejecutar query buscar usuario
+            stmt = con.prepareStatement(buscarUsuario);
+            stmt.setString(1, user.getLogin());
+            rs = stmt.executeQuery();
+
+            user = null;
+            while (rs.next()) {
+                //asignar valores al objeto usuario
+                user = new User();
+                user.setId(rs.getInt("id"));
+                user.setLogin(rs.getString("login"));
+                user.setEmail(rs.getString("email"));
+                user.setPassword(rs.getString("password"));
+                user.setFullName(rs.getString("fullName"));
+                user.setPrivilege(UserPrivilege.USER);
+                user.setStatus(UserStatus.ENABLED);
+            }
+
+        } catch (SQLException ex) {
+            //Error con la base de datos
+            logger.info("Error de conexion buscar usuario SQL");
+            throw new ConnectException("error de conexion a base de datos");
+        }
+        //devolver usuario
+        return user;
+    }
 }
