@@ -16,6 +16,7 @@ import lib.exceptions.PasswordDontMatchException;
 import lib.exceptions.UserDontExistException;
 import lib.exceptions.UserExistException;
 import lib.interfaces.Logicable;
+import lib.message.Message;
 import server.pool.Pool;
 
 /**
@@ -91,6 +92,7 @@ public class DAOableImplementation implements Logicable {
                     stmt = con.prepareStatement(procedimientoSignIn);
                     stmt.setString(1, user.getLogin());
                     stmt.executeUpdate();
+                    
                 } else {
                     //Error contraseña no coincide con la de base de datos
                     logger.info("Error contraseña signin");
@@ -106,7 +108,7 @@ public class DAOableImplementation implements Logicable {
         pool.releaseConnection(con);
         closeResulAndStatement();
         //Devolcer usuario
-        return user;
+        return usua;
     }
      /**
      * Este metodo registra un usuario en la base de datos
@@ -156,7 +158,7 @@ public class DAOableImplementation implements Logicable {
         } catch (ConnectException ex) {
             //Error con la base de datos
             logger.info("Error de conexion SignUp");
-            System.out.println("error conexion");
+            //System.out.println("error conexion");
         } catch (SQLException ex) {
             //Error con la base de datos
             logger.info("Error de conexion SQL signUp");
