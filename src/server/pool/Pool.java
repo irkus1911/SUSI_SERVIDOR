@@ -11,7 +11,7 @@ import lib.exceptions.ConnectException;
 /**
  * Esta clase pretende crear conexiones con la base de datos, estas conexiones
  * puedes ser reutilizadas por los diferentes usuarios.
- *
+ * 
  * @author Steven Arce
  */
 public class Pool {
