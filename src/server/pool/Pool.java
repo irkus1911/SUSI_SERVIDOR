@@ -31,7 +31,7 @@ public class Pool {
      * impedir la creacion de nuevas instancias.
      */
     private Pool() {
-        this.configFile = ResourceBundle.getBundle("server.pool.BDconfig");
+        this.configFile = ResourceBundle.getBundle("lib.message.AllConfig");
         this.driver = this.configFile.getString("driver");
         this.url = this.configFile.getString("url");
         this.user = this.configFile.getString("user");
