@@ -37,7 +37,7 @@ public class Server {
     public static void main(String[] args) throws InterruptedException {
 
         logger.info("Servidor iniciado");
-        configFile = ResourceBundle.getBundle("server.serverSocket.ServerProperties");
+        configFile =  ResourceBundle.getBundle("lib.message.Properties");
         PORT = Integer.valueOf(configFile.getString("PORT"));
         MAXTHREADS = Integer.valueOf(configFile.getString("MAXCONNECTIONS"));
 
