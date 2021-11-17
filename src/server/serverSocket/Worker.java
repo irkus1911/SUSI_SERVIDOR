@@ -8,7 +8,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import lib.dataModel.User;
 import lib.exceptions.ConnectException;
-import lib.exceptions.EmailExistException;
 import lib.exceptions.IncorrectEmailException;
 import lib.exceptions.IncorrectPasswordException;
 import lib.exceptions.IncorrectUserException;
@@ -104,9 +103,6 @@ public class Worker extends Thread {
             msg.setMsg(Msg.USERDONTEXISTEXCEPTION);
         } catch (TooManyUsersException ex) {
             logger.info("Se ha superado el limite maximo de clientes");
-        } catch (EmailExistException ex) {
-            logger.info("El email es el mismo que el de la base de datos");
-            msg.setMsg(Msg.EMAILEXISTEXCEPTION);
         } finally {
             closeReadWriteObject();
         }
