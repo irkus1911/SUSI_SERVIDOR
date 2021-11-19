@@ -19,6 +19,7 @@ import lib.message.Message;
 import lib.message.Msg;
 import static server.Server.returnThread;
 import server.factory.LogicableFactory;
+import lib.exceptions.EmailFoundException;
 
 /**
  * Esta clase pretende recibir y enviar objetos de tipo Message entre el cliente
@@ -103,6 +104,9 @@ public class Worker extends Thread {
             msg.setMsg(Msg.USERDONTEXISTEXCEPTION);
         } catch (TooManyUsersException ex) {
             logger.info("Se ha superado el limite maximo de clientes");
+        } catch (EmailFoundException ex) {
+            logger.info("El email introducido ya xiste");
+            msg.setMsg(Msg.EMAILFOUNDEXCEPTION);
         } finally {
             closeReadWriteObject();
         }

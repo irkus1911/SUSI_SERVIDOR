@@ -17,7 +17,7 @@ import lib.exceptions.UserDontExistException;
 import lib.exceptions.UserExistException;
 import lib.interfaces.Logicable;
 import server.pool.Pool;
-
+import lib.exceptions.EmailFoundException;
 /**
  * Esta clase maneja la logica de los metodos de signIn y signUp
  * @author Irkus de la Fuente, Steven Arce
@@ -33,6 +33,7 @@ public class DAOableImplementation implements Logicable {
     //querys
     private final String insertarUsuario = "insert into user (login,email,fullname,status,privilege,password,lastPasswordChange) values(?,?,?,?,?,?,?)";
     private final String buscarUsuario = "select * from user where login=?";
+    private final String buscarCorreo = "select * from user where email=?";
     private final String procedimientoSignIn = "{CALL last_ten_sign_in(?)}";
     /**
      * Constructor vacio construye el dao y asigna valor al pool
@@ -122,17 +123,19 @@ public class DAOableImplementation implements Logicable {
     
      //SignUp  Recibe Usuario/Devuelve Usuario
     @Override
-    public synchronized User signUp(User user) throws IncorrectUserException, IncorrectPasswordException, IncorrectEmailException, UserExistException, PasswordDontMatchException, ConnectException {
+    public synchronized User signUp(User user) throws IncorrectUserException, IncorrectPasswordException, IncorrectEmailException, UserExistException, PasswordDontMatchException, ConnectException,EmailFoundException {
         logger.info("SignUp iniciado");
-        User usua;
+        User usua,usuar;
         //Pedir conexion al pool
         con = pool.getConnection();
         //Buscar si existe usuario
         usua = buscarUser(user);
+        usuar=buscarCorreo(user);
 
         try {
             
-            if (usua == null) {
+            if (usua==null) {
+                if(usuar==null){
                 //Query insertar usuario
                 stmt = con.prepareStatement(insertarUsuario);
                 stmt.setString(1, user.getLogin());
@@ -147,11 +150,19 @@ public class DAOableImplementation implements Logicable {
                 stmt = con.prepareStatement(procedimientoSignIn);
                 stmt.setString(1, user.getLogin());
                 stmt.executeUpdate();
-            } else {
-                //Usuario ya existe
-                logger.info("Usuario ya existe signUp");
-                throw new UserExistException("Usuario ya existe");
+                
+            }else{
+                //correo ya existe 
+                throw new EmailFoundException("Email ya existe");    
+                }
+                    
+                    
+            } else{
+               //usuario ya existe
+                    throw new UserExistException("Usuario ya existe"); 
             }
+                
+             
 
         } catch (ConnectException ex) {
             //Error con la base de datos
@@ -180,12 +191,43 @@ public class DAOableImplementation implements Logicable {
     public User buscarUser(User user) throws ConnectException {
         logger.info("Buscar usuario iniciado");
         try {
+         
             //ejecutar query buscar usuario
             stmt = con.prepareStatement(buscarUsuario);
             stmt.setString(1, user.getLogin());
             rs = stmt.executeQuery();
 
-            user = null;
+            user=null;
+            while (rs.next()) {
+                //asignar valores al objeto usuario
+                user = new User();
+                user.setId(rs.getInt("id"));
+                user.setLogin(rs.getString("login"));
+                user.setEmail(rs.getString("email"));
+                user.setPassword(rs.getString("password"));
+                user.setFullName(rs.getString("fullName"));
+                user.setPrivilege(UserPrivilege.USER);
+                user.setStatus(UserStatus.ENABLED);
+            }
+
+        } catch (SQLException ex) {
+            //Error con la base de datos
+            logger.info("Error de conexion buscar usuario SQL");
+            throw new ConnectException("error de conexion a base de datos");
+        }
+        //devolver usuario
+        return user;
+    }
+    public User buscarCorreo(User user) throws ConnectException{
+        logger.info("Buscar usuario iniciado");
+        try {
+            
+            //ejecutar query buscar usuario
+            stmt = con.prepareStatement(buscarCorreo);
+            stmt.setString(1, user.getEmail());
+            rs = stmt.executeQuery();
+
+            user=null;
             while (rs.next()) {
                 //asignar valores al objeto usuario
                 user = new User();
